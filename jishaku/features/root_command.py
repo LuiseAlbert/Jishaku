@@ -1,16 +1,3 @@
-# -*- coding: utf-8 -*-
-
-"""
-jishaku.features.root_command
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-The jishaku root command.
-
-:copyright: (c) 2021 Devon (scarletcafe) R
-:license: MIT, see LICENSE for more details.
-
-"""
-
 import sys
 import typing
 
@@ -36,30 +23,19 @@ except ImportError:
 
 
 class RootCommand(Feature):
-    """
-    Feature containing the root jsk command
-    """
 
     def __init__(self, *args: typing.Any, **kwargs: typing.Any):
         super().__init__(*args, **kwargs)
-        self.jsk.hidden = Flags.HIDE  # type: ignore
+        self.jsk.hidden = Flags.HIDE
 
     @Feature.Command(name="jishaku", aliases=["jsk","rex","eval","sahil", "nyn"],
                      invoke_without_command=True, ignore_extra=False)
     async def jsk(self, ctx: ContextA):
-        """
-        The Jishaku debug and diagnostic commands.
-
-        This command on its own gives a status brief.
-        All other functionality is within its subcommands.
-        """
-
-        # Try to locate what vends the `discord` package
         distributions: typing.List[str] = [
-            dist for dist in packages_distributions()['discord']  # type: ignore
+            dist for dist in packages_distributions()['discord']
             if any(
-                file.parts == ('discord', '__init__.py')  # type: ignore
-                for file in distribution(dist).files  # type: ignore
+                file.parts == ('discord', '__init__.py')
+                for file in distribution(dist).files
             )
         ]
 
@@ -76,7 +52,6 @@ class RootCommand(Feature):
             ""
         ]
 
-        # detect if [procinfo] feature is installed
         if psutil:
             try:
                 proc = psutil.Process()
@@ -99,18 +74,18 @@ class RootCommand(Feature):
                     except psutil.AccessDenied:
                         pass
 
-                    summary.append("")  # blank line
+                    summary.append("")
             except psutil.AccessDenied:
                 summary.append(
                     "psutil is installed, but this process does not have high enough access rights "
                     "to query process information."
                 )
-                summary.append("")  # blank line
+                summary.append("")
+        total_members = sum(g.member_count or 0 for g in self.bot.guilds)
         s_for_guilds = "" if len(self.bot.guilds) == 1 else "s"
-        s_for_users = "" if len(self.bot.users) == 1 else "s"
-        cache_summary = f"{len(self.bot.guilds)} guild{s_for_guilds} and {len(self.bot.users)} user{s_for_users}"
+        s_for_users = "" if total_members == 1 else "s"
+        cache_summary = f"{len(self.bot.guilds)} guild{s_for_guilds} and {total_members} user{s_for_users}"
 
-        # Show shard settings to summary
         if isinstance(self.bot, discord.AutoShardedClient):
             if len(self.bot.shards) > 20:
                 summary.append(
@@ -131,9 +106,8 @@ class RootCommand(Feature):
         else:
             summary.append(f"This bot is not sharded and can see {cache_summary}.")
 
-        # pylint: disable=protected-access
-        if self.bot._connection.max_messages:  # type: ignore
-            message_cache = f"Message cache capped at {self.bot._connection.max_messages}"  # type: ignore
+        if self.bot._connection.max_messages:
+            message_cache = f"Message cache capped at {self.bot._connection.max_messages}"
         else:
             message_cache = "Message cache is disabled"
 
@@ -151,11 +125,7 @@ class RootCommand(Feature):
 
         summary.append(f"{message_cache}, {', '.join(group)}, and {last}.")
 
-        # pylint: enable=protected-access
-
-        # Show websocket latency in milliseconds
         summary.append(f"**Average websocket latency:** **`{round(self.bot.latency * 1000, 2)}ms`**")
-        #await ctx.send("\n".join(summary))
         rex = discord.Embed(
                 description="\n".join(summary),
                 color=0xAADBE2)
@@ -166,37 +136,26 @@ class RootCommand(Feature):
                 if ctx.author.avatar else ctx.author.default_avatar.url)
         await ctx.send(embed=rex)
         
-    # pylint: disable=no-member
     @Feature.Command(parent="jsk", name="hide")
     async def jsk_hide(self, ctx: ContextA):
-        """
-        Hides Jishaku from the help command.
-        """
 
-        if self.jsk.hidden:  # type: ignore
+        if self.jsk.hidden:
             return await ctx.send("Jishaku is already hidden.")
 
-        self.jsk.hidden = True  # type: ignore
+        self.jsk.hidden = True
         await ctx.send("Jishaku is now hidden.")
 
     @Feature.Command(parent="jsk", name="show")
     async def jsk_show(self, ctx: ContextA):
-        """
-        Shows Jishaku in the help command.
-        """
 
-        if not self.jsk.hidden:  # type: ignore
+        if not self.jsk.hidden:
             return await ctx.send("Jishaku is already visible.")
 
-        self.jsk.hidden = False  # type: ignore
+        self.jsk.hidden = False
         await ctx.send("Jishaku is now visible.")
-    # pylint: enable=no-member
 
     @Feature.Command(parent="jsk", name="tasks")
     async def jsk_tasks(self, ctx: ContextA):
-        """
-        Shows the currently running jishaku tasks.
-        """
 
         if not self.tasks:
             return await ctx.send("No currently running tasks.")
@@ -216,11 +175,6 @@ class RootCommand(Feature):
 
     @Feature.Command(parent="jsk", name="cancel")
     async def jsk_cancel(self, ctx: ContextA, *, index: typing.Union[int, str]):
-        """
-        Cancels a task with the given index.
-
-        If the index passed is -1, will cancel the last task instead.
-        """
 
         if not self.tasks:
             return await ctx.send("No tasks to cancel.")
